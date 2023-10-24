@@ -15,6 +15,9 @@ public class OperacionsBD {
 
     Scanner sc = new Scanner(System.in);
 
+    public OperacionsBD() {
+    }
+
     //Metodo abrir conexion
     public void abrirConexion() throws SQLException {
 
@@ -42,14 +45,58 @@ public class OperacionsBD {
 
     //Metodo consulta Alumno
     public void consultaAlumno() {
+        PreparedStatement sentencia = null;
+        ResultSet resultado = null;
 
+        try {
+            abrirConexion();
+            String insert = "SELECT DNI, NOMBRE, APELLIDOS, EDAD FROM ALUMNOSTABLA WHERE DNI = ?";
+            sentencia = conexion.prepareStatement(insert);
+
+            System.out.println("Introduce el DNI del ALUMNO: ");
+            String alumnoDni = sc.nextLine();
+
+           
+            sentencia.setString(1, alumnoDni);
+
+            resultado = sentencia.executeQuery();
+
+            if (resultado.next()) {
+       
+                System.out.println("DNI: " + resultado.getString("DNI")+", Nombre: " + resultado.getString("NOMBRE")+", Apellidos: " + resultado.getString("APELLIDOS")+", Edad: " + resultado.getInt("EDAD"));
+                System.out.println("\n");
+              
+            } else {
+                System.out.println("No se encontró ningún alumno con el DNI proporcionado.");
+            }
+        } catch (SQLException sqle) {
+            sqle.printStackTrace();
+        } finally {
+            if (resultado != null) {
+                try {
+                    resultado.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (sentencia != null) {
+                try {
+                    sentencia.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            cerrarConexion();
+        }
     }
 
     //Metodo engade Alumno
     public void addAlumno() {
         try {
             abrirConexion();
-            String insert = "INSERT INTO ALUMNOS (DNI, NOMBRE, APELLIDOS, EDAD) VALUES (?,?,?,?)";
+            String insert = "INSERT INTO ALUMNOSTABLA (DNI, NOMBRE, APELLIDOS, EDAD) VALUES (?,?,?,?)";
 
             System.out.println("Introduce un DNI: ");
             String insertDni = sc.nextLine();
@@ -58,7 +105,7 @@ public class OperacionsBD {
             System.out.println("Introduce un/unos APELLIDO/S: ");
             String insertApellidos = sc.nextLine();
             System.out.println("Introduce una EDAD: ");
-            int insertEdad = sc.nextInt();
+            int insertEdad = Integer.valueOf(sc.nextLine());
 
             try (PreparedStatement ps = conexion.prepareStatement(insert)) {
                 ps.setString(1, insertDni);
@@ -87,14 +134,14 @@ public class OperacionsBD {
     public void removeAlumno() {
         try {
             abrirConexion();
-            String sentenciaSql = "DELETE FROM ALUMNOS WHERE NOMBRE = ?";
+            String insert = "DELETE FROM ALUMNOSTABLA WHERE DNI = ?";
             PreparedStatement sentencia = null;
 
             try {
-                System.out.println("Escribe el nombre del ALUMNO a ELIMINAR: ");
-                String removeNombre = sc.nextLine();
-                sentencia = conexion.prepareStatement(sentenciaSql);
-                sentencia.setString(1, removeNombre);
+                System.out.println("Escribe el DNI del ALUMNO a ELIMINAR: ");
+                String removeDni = sc.nextLine();
+                sentencia = conexion.prepareStatement(insert);
+                sentencia.setString(1, removeDni);
                 int filasAfectadas = sentencia.executeUpdate();
 
                 if (filasAfectadas > 0) {
@@ -109,8 +156,8 @@ public class OperacionsBD {
                     sentencia.close();
                 }
             }
-        } catch (SQLException ex) {
-            Logger.getLogger(OperacionsBD.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SQLException sqle) {
+            Logger.getLogger(OperacionsBD.class.getName()).log(Level.SEVERE, null, sqle);
         } finally {
             cerrarConexion();
         }
@@ -118,7 +165,43 @@ public class OperacionsBD {
 
     //Metodo Modifica Alumno
     public void modifyAlumno() {
+        try {
+            abrirConexion();
+            String updateQuery = "UPDATE ALUMNOSTABLA SET NOMBRE = ?, APELLIDOS = ?, EDAD = ? WHERE DNI = ?";
 
+            try (PreparedStatement ps = conexion.prepareStatement(updateQuery)) {
+                System.out.println("Introduce el DNI del alumno a modificar: ");
+                String dniAlumno = sc.nextLine();
+
+                System.out.println("Introduce un nuevo NOMBRE: ");
+                String nuevoNombre = sc.nextLine();
+
+                System.out.println("Introduce un nuevo APELLIDO: ");
+                String nuevoApellido = sc.nextLine();
+
+                System.out.println("Introduce una nueva EDAD: ");
+                int nuevaEdad = sc.nextInt();
+
+                ps.setString(1, nuevoNombre);
+                ps.setString(2, nuevoApellido);
+                ps.setInt(3, nuevaEdad);
+                ps.setString(4, dniAlumno);
+
+                int rowsUpdated = ps.executeUpdate();
+
+                if (rowsUpdated > 0) {
+                    System.out.println("Alumno actualizado exitosamente.");
+                } else {
+                    System.out.println("No se encontró ningún alumno con el DNI proporcionado.");
+                }
+            } catch (SQLException sqle) {
+                sqle.printStackTrace();
+            }
+        } catch (SQLException sqle) {
+            Logger.getLogger(OperacionsBD.class.getName()).log(Level.SEVERE, null, sqle);
+        } finally {
+            cerrarConexion();
+        }
     }
 
     //Metodo listar Alumno
@@ -128,13 +211,13 @@ public class OperacionsBD {
 
         try {
             abrirConexion();
-            String sentenciaSql = "SELECT NOMBRE, APELLIDOS FROM ALUMNOS";
+            String sentenciaSql = "SELECT DNI, NOMBRE, APELLIDOS, EDAD FROM ALUMNOSTABLA";
             sentencia = conexion.prepareStatement(sentenciaSql);
             resultado = sentencia.executeQuery();
 
             while (resultado.next()) {
-                System.out.println("Nombre: " + resultado.getString("NOMBRE"));
-                System.out.println("Apellidos: " + resultado.getString("APELLIDOS"));
+                System.out.println(" DNI: " + resultado.getString("DNI")+", Nombre: " + resultado.getString("NOMBRE")+", Apellidos: " + resultado.getString("APELLIDOS")+", Edad: " + resultado.getInt("EDAD"));
+                System.out.println("\n");
             }
         } catch (SQLException sqle) {
             sqle.printStackTrace();
